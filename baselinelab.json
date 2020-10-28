@@ -1,0 +1,672 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "loadBalancers_az104_lb_name": {
+            "defaultValue": "az104-lb",
+            "type": "String"
+        },
+        "virtualNetworks_az104_vnet_name": {
+            "defaultValue": "az104-vnet",
+            "type": "String"
+        },
+        "storageAccounts_az104syslog_name": {
+            "defaultValue": "az104syslog",
+            "type": "String"
+        },
+        "publicIPAddresses_az104_lb_ip_name": {
+            "defaultValue": "az104-lb-ip",
+            "type": "String"
+        },
+        "bastionHosts_az104_vnet_bastion_name": {
+            "defaultValue": "az104-vnet-bastion",
+            "type": "String"
+        },
+        "networkSecurityGroups_az104_nsg_name": {
+            "defaultValue": "az104-nsg",
+            "type": "String"
+        },
+        "publicIPAddresses_az104_ip_bastion_name": {
+            "defaultValue": "az104-ip-bastion",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('networkSecurityGroups_az104_nsg_name')]",
+            "location": "southeastasia",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowRDP",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowICMP",
+                        "properties": {
+                            "protocol": "ICMP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 110,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowSSH",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowHTTP",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 130,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowSMB",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "139",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 140,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    },
+                    {
+                        "name": "AllowSSMB",
+                        "properties": {
+                            "protocol": "TCP",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "445",
+                            "sourceAddressPrefix": "120.29.85.88",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 150,
+                            "direction": "Inbound",
+                            "sourcePortRanges": [],
+                            "destinationPortRanges": [],
+                            "sourceAddressPrefixes": [],
+                            "destinationAddressPrefixes": []
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('publicIPAddresses_az104_ip_bastion_name')]",
+            "location": "southeastasia",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "ipAddress": "20.195.63.213",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('publicIPAddresses_az104_lb_ip_name')]",
+            "location": "southeastasia",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/loadBalancers",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('loadBalancers_az104_lb_name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_az104_lb_ip_name'))]"
+            ],
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_az104_lb_ip_name'))]"
+                            },
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "backendAddressPools": [],
+                "loadBalancingRules": [],
+                "probes": [],
+                "inboundNatRules": [],
+                "inboundNatPools": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowHTTP')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "80",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 130,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowICMP')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "ICMP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "*",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 110,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowRDP')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "3389",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowSMB')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "139",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 140,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowSSH')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 120,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('networkSecurityGroups_az104_nsg_name'), '/AllowSSMB')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "protocol": "TCP",
+                "sourcePortRange": "*",
+                "destinationPortRange": "445",
+                "sourceAddressPrefix": "120.29.85.88",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 150,
+                "direction": "Inbound",
+                "sourcePortRanges": [],
+                "destinationPortRanges": [],
+                "sourceAddressPrefixes": [],
+                "destinationAddressPrefixes": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('virtualNetworks_az104_vnet_name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.10.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.10.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+                            },
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": [
+                                        "southeastasia",
+                                        "eastasia"
+                                    ]
+                                }
+                            ],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "10.10.240.0/24",
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "default2",
+                        "properties": {
+                            "addressPrefix": "10.10.1.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('virtualNetworks_az104_vnet_name'), '/AzureBastionSubnet')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_az104_vnet_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "10.10.240.0/24",
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[parameters('storageAccounts_az104syslog_name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_az104_vnet_name'), 'default')]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_az104_vnet_name'), 'default')]",
+                            "action": "Allow",
+                            "state": "Succeeded"
+                        }
+                    ],
+                    "ipRules": [
+                        {
+                            "value": "120.29.85.88",
+                            "action": "Allow"
+                        }
+                    ],
+                    "defaultAction": "Deny"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                },
+                "deleteRetentionPolicy": {
+                    "enabled": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/fileServices",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ],
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            },
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/queueServices",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ],
+            "properties": {
+                "cors": {
+                    "corsRules": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('bastionHosts_az104_vnet_bastion_name')]",
+            "location": "southeastasia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_az104_ip_bastion_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_az104_vnet_name'), 'AzureBastionSubnet')]"
+            ],
+            "properties": {
+                "dnsName": "bst-4b370401-6633-41ce-bf8a-632d5de7d2d5.bastion.azure.com",
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_az104_ip_bastion_name'))]"
+                            },
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_az104_vnet_name'), 'AzureBastionSubnet')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('virtualNetworks_az104_vnet_name'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_az104_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "10.10.0.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+                },
+                "serviceEndpoints": [
+                    {
+                        "service": "Microsoft.Storage",
+                        "locations": [
+                            "southeastasia",
+                            "eastasia"
+                        ]
+                    }
+                ],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "apiVersion": "2020-05-01",
+            "name": "[concat(parameters('virtualNetworks_az104_vnet_name'), '/default2')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_az104_vnet_name'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+            ],
+            "properties": {
+                "addressPrefix": "10.10.1.0/24",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_az104_nsg_name'))]"
+                },
+                "serviceEndpoints": [],
+                "delegations": [],
+                "privateEndpointNetworkPolicies": "Enabled",
+                "privateLinkServiceNetworkPolicies": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/LinuxSyslogVer2v0')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/SchemasTable')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/WADDiagnosticInfrastructureLogsTable')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/WADMetricsPT1HP10DV2S20201021')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/WADMetricsPT1MP10DV2S20201021')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/WADPerformanceCountersTable')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2020-08-01-preview",
+            "name": "[concat(parameters('storageAccounts_az104syslog_name'), '/default/WADWindowsEventLogsTable')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', parameters('storageAccounts_az104syslog_name'), 'default')]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_az104syslog_name'))]"
+            ]
+        }
+    ]
+}
